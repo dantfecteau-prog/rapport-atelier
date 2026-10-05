@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapport Atelier - ARM</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode.js/1.5.3/qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1f4788;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --border-radius: 12px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, #2a5aa8 100%);
+            min-height: 100vh;
+            padding: 12px;
+            color: var(--dark);
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary), #2a5aa8);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .header p {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .header-buttons {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-icon {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background 0.3s;
+        }
+
+        .btn-icon:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal.show,
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .modal-close:hover {
+            color: #000;
+        }
+
+        .modal-field {
+            margin-bottom: 15px;
+        }
+
+        .modal-field label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 6px;
+            font-size: 13px;
+            color: var(--dark);
+        }
+
+        .modal-field input[type="text"],
+        .modal-field textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .modal-field input[type="text"]:focus,
+        .modal-field textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .modal-save {
+            background: var(--success);
+            color: white;
+        }
+
+        .modal-save:hover {
+            background: #229954;
+        }
+
+        .modal-cancel {
+            background: #e0e0e0;
+            color: var(--dark);
+        }
+
+        .modal-cancel:hover {
+            background: #d0d0d0;
+        }
+
+        .content {
+            padding: 20px;
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        .field {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: var(--dark);
+        }
+
+        input[type="text"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(31, 71, 136, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1a3661;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(31, 71, 136, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .recording-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: var(--danger);
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .transcript-box {
+            background: #f8f9fa;
+            border-left: 4px solid var(--primary);
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-bottom: 12px;
+            line-height: 1.5;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .correction-box {
+            background: #e8f5e9;
+            border-left: 4px solid var(--success);
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .error-box {
+            background: #ffebee;
+            border-left: 4px solid var(--danger);
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            margin-bottom: 12px;
+            color: var(--danger);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .qr-code-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .qr-code-container canvas {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .data-summary {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+
+        .data-summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .data-summary-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .data-summary-label {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .data-summary-value {
+            color: var(--dark);
+            word-break: break-word;
+        }
+
+        .photo-preview {
+            margin-top: 10px;
+            position: relative;
+        }
+
+        .photo-preview img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .photo-remove {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(31, 71, 136, 0.3);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 8px;
+            }
+
+            .content {
+                padding: 16px;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 Rapport Atelier</h1>
+            <p>Les Armoires Raynald Marcoux</p>
+            <div class="header-buttons">
+                <button class="btn-icon" onclick="openQRModal()" title="Afficher QR Codes">🔲</button>
+                <button class="btn-icon" onclick="openSettingsModal()" title="Paramètres">⚙️</button>
+            </div>
+        </div>
+
+        <div class="content" id="mainContent">
+            <div class="section">
+                <div class="section-title">Poste de travail</div>
+                <div class="field">
+                    <input type="text" id="poste" placeholder="Détecté depuis QR code" readonly style="background: #f0f0f0;">
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Enregistrement vocal</div>
+                <div id="statusMessage"></div>
+                <div class="button-group">
+                    <button class="btn-primary" id="startBtn" onclick="startListening()">
+                        🎤 Démarrer
+                    </button>
+                    <button class="btn-danger hidden" id="stopBtn" onclick="stopListening()">
+                        ⏹ Arrêter
+                    </button>
+                </div>
+
+                <div id="transcriptBox" class="transcript-box hidden"></div>
+                <div id="correctionBox" class="correction-box hidden"></div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Contexte du problème</div>
+                <div class="field">
+                    <label>Description complémentaire (optionnel)</label>
+                    <textarea id="description" placeholder="Infos supplémentaires..."></textarea>
+                </div>
+
+                <div class="field">
+                    <label>Impact</label>
+                    <select id="impact">
+                        <option value="">-- Sélectionner --</option>
+                        <option value="Arrêt production">⛔ Arrêt production</option>
+                        <option value="Ralentissement">⚠️ Ralentissement</option>
+                        <option value="Qualité">🔍 Qualité</option>
+                        <option value="Mineur">ℹ️ Mineur</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Photo (optionnel)</label>
+                    <input type="file" id="photo" accept="image/*" capture="environment">
+                    <div id="photoPreview"></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Qui rapporte?</div>
+                <div class="field">
+                    <input type="text" id="employe" placeholder="Ton nom">
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-success" onclick="submitReport()">✅ Soumettre</button>
+                <button class="btn-secondary" onclick="resetForm()">🔄 Réinitialiser</button>
+            </div>
+
+            <div id="successMessage"></div>
+
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
+                <div class="section-title">Gestion des Données</div>
+                <div class="button-group">
+                    <button class="btn-primary" onclick="exportDataAsCSV()">📊 Exporter en CSV</button>
+                    <button class="btn-success" onclick="sendPhotosToOneDrive()">📸 Envoyer à OneDrive</button>
+                </div>
+                <div class="button-group">
+                    <button class="btn-warning" onclick="clearAllData()">🗑️ Effacer tout</button>
+                </div>
+                <div style="font-size: 12px; color: #666; margin-top: 10px;">
+                    <span id="dataCount">0 rapports enregistrés</span>
+                </div>
+                <div id="oneDriveSettings" style="margin-top: 15px; padding: 12px; background: #f0f8ff; border-radius: 8px; font-size: 12px; display: none;">
+                    <div style="margin-bottom: 8px;">
+                        <strong>🔗 URL du Workflow Power Automate:</strong>
+                    </div>
+                    <input type="text" id="powerAutomateUrl" placeholder="Colle l'URL du workflow ici" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 11px; margin-bottom: 8px;">
+                    <div style="color: #0066cc; cursor: pointer;" onclick="togglePowerAutomateHelp()">📚 Aide: Comment obtenir l'URL?</div>
+                    <div id="powerAutomateHelp" style="display: none; margin-top: 8px; padding: 8px; background: white; border-left: 3px solid #0066cc; font-size: 11px; line-height: 1.5;">
+                        <strong>Étapes:</strong><br>
+                        1. Va sur <a href="https://make.powerautomate.com" target="_blank" style="color: #0066cc;">Power Automate</a><br>
+                        2. Crée un workflow "Cloud flow" → "Instant cloud flow"<br>
+                        3. Ajoute un trigger "When a HTTP request is received"<br>
+                        4. Copie l'URL générée et colle-la ici<br>
+                        5. Clique "Envoyer à OneDrive" pour envoyer les photos
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="qrModal">
+        <div class="modal-content">
+            <div class="modal-header">QR Codes - Postes de Travail</div>
+            <p style="font-size: 12px; margin-bottom: 16px; color: #666;">Imprimer et plastifier. Scanner pour auto-remplir le poste.</p>
+            <div id="qrContainer"></div>
+            <button class="btn-primary" onclick="closeQRModal()" style="width: 100%; margin-top: 16px;">Fermer</button>
+        </div>
+    </div>
+
+    <!-- Modale Paramètres Power Automate -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                ⚙️ Paramètres
+                <button class="modal-close" onclick="closeSettingsModal()">✕</button>
+            </div>
+            
+            <div class="modal-field">
+                <label>🔗 URL Power Automate (Webhook)</label>
+                <textarea id="powerAutomateUrlInput" 
+                    placeholder="Colle l'URL du webhook Power Automate ici..."
+                    style="height: 80px; font-size: 12px;"></textarea>
+                <p style="font-size: 11px; color: #999; margin-top: 6px;">
+                    Cette URL sera utilisée pour envoyer les rapports automatiquement.
+                </p>
+            </div>
+
+            <div class="modal-field">
+                <label>📧 Email pour les rapports</label>
+                <input type="text" id="emailInput" 
+                    placeholder="ton@email.com"
+                    value="">
+                <p style="font-size: 11px; color: #999; margin-top: 6px;">
+                    Les rapports seront envoyés à cet email.
+                </p>
+            </div>
+
+            <div style="background: #f0f8ff; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 12px; color: #1f4788;">
+                <strong>ℹ️ Comment obtenir l'URL?</strong><br>
+                1. Va dans Power Automate<br>
+                2. Clique sur le trigger "Manual"<br>
+                3. Copie l'URL HTTP POST complète<br>
+                4. Colle-la ci-dessus
+            </div>
+
+            <div class="modal-buttons">
+                <button class="modal-save" onclick="saveSettings()">✓ Enregistrer</button>
+                <button class="modal-cancel" onclick="closeSettingsModal()">✕ Annuler</button>
+            </div>
+
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e0e0e0; font-size: 12px; color: #666;">
+                <strong>État de connexion:</strong><br>
+                <span id="connectionStatus">🟡 En attente de configuration...</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== CONFIGURATION =====
+        const POSTES = [
+            'Banc de scie',
+            'CNC',
+            'Edgeuse',
+            'Goujons',
+            'Assemblage',
+            'Portes & Mécanisme',
+            'Têtes & Tablettes 45°',
+            'Comptoir'
+        ];
+
+        const NOTIFIES = ['dfecteau', 'Tony', 'Zachary'];
+        const API_KEY = ''; // Sera défini via environment ou ne pas utiliser pour MVP
+
+        // ===== INITIALISATION =====
+        let recognition = null;
+        let isListening = false;
+        let currentTranscript = '';
+        let photoFile = null;
+
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.lang = 'fr-CA';
+            recognition.continuous = false;
+            recognition.interimResults = true;
+
+            recognition.onstart = () => {
+                isListening = true;
+                updateUIListening();
+            };
+
+            recognition.onresult = (event) => {
+                currentTranscript = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    currentTranscript += event.results[i][0].transcript;
+                }
+                showTranscript(currentTranscript);
+            };
+
+            recognition.onend = () => {
+                isListening = false;
+                updateUIListening();
+                if (currentTranscript.trim()) {
+                    correctWithClaude(currentTranscript);
+                }
+            };
+
+            recognition.onerror = (event) => {
+                showStatus(`Erreur: ${event.error}`, 'error');
+                isListening = false;
+                updateUIListening();
+            };
+        }
+
+        // ===== GESTION QR CODES =====
+        function generateQRCodes() {
+            const container = document.getElementById('qrContainer');
+            container.innerHTML = '';
+
+            POSTES.forEach((poste, index) => {
+                const qrDiv = document.createElement('div');
+                qrDiv.style.marginBottom = '24px';
+                qrDiv.style.textAlign = 'center';
+
+                const title = document.createElement('div');
+                title.style.fontSize = '14px';
+                title.style.fontWeight = '600';
+                title.style.marginBottom = '10px';
+                title.style.color = '#1f4788';
+                title.textContent = poste;
+
+                const canvas = document.createElement('canvas');
+                canvas.id = `qr-${index}`;
+
+                qrDiv.appendChild(title);
+                qrDiv.appendChild(canvas);
+                container.appendChild(qrDiv);
+
+                // Générer le QR code
+                const url = `${window.location.href.split('?')[0]}?poste=${encodeURIComponent(poste)}`;
+                new QRCode(canvas, {
+                    text: url,
+                    width: 200,
+                    height: 200,
+                    colorDark: '#1f4788',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            });
+        }
+
+        function openQRModal() {
+            if (document.getElementById('qrContainer').innerHTML === '') {
+                generateQRCodes();
+            }
+            document.getElementById('qrModal').classList.add('show');
+        }
+
+        function closeQRModal() {
+            document.getElementById('qrModal').classList.remove('show');
+        }
+
+        // ===== MODALES PARAMÈTRES =====
+        function openSettingsModal() {
+            // Charge les valeurs sauvegardées
+            const savedUrl = localStorage.getItem('powerAutomateUrl') || '';
+            const savedEmail = localStorage.getItem('userEmail') || '';
+            document.getElementById('powerAutomateUrlInput').value = savedUrl;
+            document.getElementById('emailInput').value = savedEmail;
+            updateConnectionStatus();
+            document.getElementById('settingsModal').classList.add('show');
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').classList.remove('show');
+        }
+
+        function saveSettings() {
+            const url = document.getElementById('powerAutomateUrlInput').value.trim();
+            const email = document.getElementById('emailInput').value.trim();
+
+            if (url && !url.startsWith('https://')) {
+                alert('❌ L\'URL doit commencer par https://');
+                return;
+            }
+
+            localStorage.setItem('powerAutomateUrl', url);
+            localStorage.setItem('userEmail', email);
+            
+            updateConnectionStatus();
+            alert('✅ Paramètres enregistrés avec succès!');
+            closeSettingsModal();
+        }
+
+        function updateConnectionStatus() {
+            const url = localStorage.getItem('powerAutomateUrl') || '';
+            const email = localStorage.getItem('userEmail') || '';
+            const statusEl = document.getElementById('connectionStatus');
+            
+            if (url && email) {
+                statusEl.innerHTML = '✅ Connecté et prêt!<br><small>' + email + '</small>';
+                statusEl.style.color = 'var(--success)';
+            } else if (url) {
+                statusEl.innerHTML = '🟡 URL configurée, email manquant';
+                statusEl.style.color = 'var(--warning)';
+            } else {
+                statusEl.innerHTML = '🟡 Configuration en attente...';
+                statusEl.style.color = 'var(--warning)';
+            }
+        }
+
+        // ===== DÉTECTION POSTE VIA URL =====
+        function detectPoste() {
+            const params = new URLSearchParams(window.location.search);
+            const poste = params.get('poste');
+            if (poste) {
+                document.getElementById('poste').value = decodeURIComponent(poste);
+            }
+        }
+
+        // ===== DICTÉE =====
+        function startListening() {
+            if (!recognition) {
+                showStatus('Reconnaissance vocale non supportée sur ce navigateur', 'error');
+                return;
+            }
+            currentTranscript = '';
+            document.getElementById('transcriptBox').classList.add('hidden');
+            document.getElementById('correctionBox').classList.add('hidden');
+            recognition.start();
+        }
+
+        function stopListening() {
+            if (recognition) {
+                recognition.stop();
+            }
+        }
+
+        function updateUIListening() {
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+
+            if (isListening) {
+                startBtn.classList.add('hidden');
+                stopBtn.classList.remove('hidden');
+                showStatus('<span class="recording-indicator"></span>Écoute en cours...', 'info');
+            } else {
+                startBtn.classList.remove('hidden');
+                stopBtn.classList.add('hidden');
+            }
+        }
+
+        function showTranscript(text) {
+            const box = document.getElementById('transcriptBox');
+            box.innerHTML = `<strong>Texte enregistré:</strong><br>${text}`;
+            box.classList.remove('hidden');
+        }
+
+        // ===== CORRECTION TEXTE (Correction de base locale) =====
+        function correctWithClaude(text) {
+            showStatus('<span class="loading-spinner"></span>Correction en cours...', 'info');
+            
+            // Correction simple locale (MVP)
+            // En production, ça appellerait Claude API depuis ton backend
+            setTimeout(() => {
+                const corrected = correctTextLocally(text);
+                parseClaudeResponse(corrected, text);
+                showStatus('✅ Texte corrigé', 'success');
+            }, 800); // Simule un délai réseau
+        }
+
+        function correctTextLocally(text) {
+            // Nettoyage basique + standardisation termes atelier
+            let corrected = text.trim();
+            
+            // Standardise les termes courants
+            const replacements = {
+                'bande de shant': 'bande de chant',
+                'band de chant': 'bande de chant',
+                'edgeuse': 'edgeuse',
+                'la shape': 'la pièce',
+                'buzz': 'bruit',
+                'qui bloque': 'qui reste bloquée',
+                'calibre pas': 'n\'est pas calibrée',
+                'colle elle sèche': 'colle sèche',
+                'la machine elle': 'la machine ',
+                'elle bloque': 'reste bloquée',
+                'elle buzz': 'fait du bruit'
+            };
+            
+            Object.keys(replacements).forEach(key => {
+                const regex = new RegExp(key, 'gi');
+                corrected = corrected.replace(regex, replacements[key]);
+            });
+            
+            // Capitalise la première lettre
+            corrected = corrected.charAt(0).toUpperCase() + corrected.slice(1);
+            
+            // Ajoute point final si absent
+            if (!corrected.match(/[.!?]$/)) {
+                corrected += '.';
+            }
+            
+            return `TEXTE CORRIGÉ: ${corrected}\n\nPROBLÈME: ${corrected}\n\nCAUSE: (à déterminer)\n\nACTION: (à déterminer)`;
+        }
+
+        function parseClaudeResponse(response, original) {
+            const box = document.getElementById('correctionBox');
+            box.innerHTML = `<strong>✅ Texte corrigé:</strong><br>${response}`;
+            box.classList.remove('hidden');
+
+            // Extraire automatiquement les champs
+            const problemeMatch = response.match(/PROBLÈME:\s*(.+?)(?=\n|CAUSE:|$)/i);
+            if (problemeMatch) {
+                const problemeText = problemeMatch[1].trim();
+                if (problemeText && problemeText !== '(à déterminer)') {
+                    document.getElementById('description').value = problemeText;
+                }
+            }
+        }
+
+        // ===== GESTION PHOTOS =====
+        document.getElementById('photo')?.addEventListener('change', (e) => {
+            photoFile = e.target.files[0];
+            if (photoFile) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const preview = document.getElementById('photoPreview');
+                    preview.innerHTML = `
+                        <div class="photo-preview">
+                            <img src="${event.target.result}" alt="Photo">
+                            <button class="photo-remove" onclick="removePhoto()">✕</button>
+                        </div>
+                    `;
+                };
+                reader.readAsDataURL(photoFile);
+            }
+        });
+
+        function removePhoto() {
+            photoFile = null;
+            document.getElementById('photo').value = '';
+            document.getElementById('photoPreview').innerHTML = '';
+        }
+
+        // ===== SOUMISSION =====
+        async function submitReport() {
+            const poste = document.getElementById('poste').value;
+            const description = document.getElementById('description').value;
+            const impact = document.getElementById('impact').value;
+            const employe = document.getElementById('employe').value;
+
+            if (!poste) {
+                showStatus('❌ Veuillez scanner le code QR du poste', 'error');
+                return;
+            }
+
+            if (!description.trim()) {
+                showStatus('❌ Veuillez décrire le problème', 'error');
+                return;
+            }
+
+            if (!employe.trim()) {
+                showStatus('❌ Veuillez entrer votre nom', 'error');
+                return;
+            }
+
+            // Préparer les données
+            const reportData = {
+                timestamp: new Date().toISOString(),
+                poste,
+                description,
+                impact: impact || 'Non spécifié',
+                employe,
+                photo: photoFile ? 'inclus' : 'non'
+            };
+
+            try {
+                showStatus('<span class="loading-spinner"></span>Soumission en cours...', 'info');
+
+                // Simuler l'envoi (en production, ça irait à un serveur)
+                // Pour le MVP, on stocke en localStorage et on prépare l'export Excel
+                const reports = JSON.parse(localStorage.getItem('armReports') || '[]');
+                reports.push(reportData);
+                localStorage.setItem('armReports', JSON.stringify(reports));
+
+                // Notifier les utilisateurs Teams (simulation)
+                await notifyTeams(reportData);
+
+                showStatus(`✅ Rapport #${reports.length} soumis avec succès!`, 'success');
+                updateDataCount(); // Mets à jour le compteur
+                setTimeout(() => resetForm(), 2000);
+            } catch (error) {
+                showStatus('❌ Erreur lors de la soumission', 'error');
+                console.error(error);
+            }
+        }
+
+        async function notifyTeams(reportData) {
+            // Webhook Teams simulé (à configurer en production)
+            console.log('🔔 Notif Teams:', reportData);
+            // En production: POST vers webhook Teams avec format adapté
+        }
+
+        function resetForm() {
+            document.getElementById('description').value = '';
+            document.getElementById('impact').value = '';
+            document.getElementById('employe').value = '';
+            document.getElementById('transcriptBox').classList.add('hidden');
+            document.getElementById('correctionBox').classList.add('hidden');
+            document.getElementById('statusMessage').innerHTML = '';
+            removePhoto();
+            currentTranscript = '';
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('statusMessage');
+            if (message) {
+                statusDiv.className = `status ${type}`;
+                statusDiv.innerHTML = message;
+            } else {
+                statusDiv.innerHTML = '';
+            }
+        }
+
+        // ===== EXPORT & GESTION DONNÉES =====
+        let powerAutomateUrlStored = localStorage.getItem('powerAutomateUrl') || '';
+
+        function toggleOneDriveSettings() {
+            const settingsDiv = document.getElementById('oneDriveSettings');
+            settingsDiv.style.display = settingsDiv.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function togglePowerAutomateHelp() {
+            const helpDiv = document.getElementById('powerAutomateHelp');
+            helpDiv.style.display = helpDiv.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function updateDataCount() {
+            const reports = JSON.parse(localStorage.getItem('armReports') || '[]');
+            document.getElementById('dataCount').textContent = `${reports.length} rapport${reports.length > 1 ? 's' : ''} enregistré${reports.length > 1 ? 's' : ''}`;
+            
+            // Affiche les paramètres Power Automate si des rapports existent
+            if (reports.length > 0) {
+                document.getElementById('oneDriveSettings').style.display = 'block';
+                const savedUrl = localStorage.getItem('powerAutomateUrl');
+                if (savedUrl) {
+                    document.getElementById('powerAutomateUrl').value = savedUrl;
+                }
+            }
+        }
+
+        function exportDataAsCSV() {
+            const reports = JSON.parse(localStorage.getItem('armReports') || '[]');
+            
+            if (reports.length === 0) {
+                showStatus('❌ Aucun rapport à exporter', 'error');
+                return;
+            }
+
+            // En-têtes CSV
+            const headers = ['Date', 'Heure', 'Poste', 'Problème', 'Impact', 'Employé', 'Photo?', 'Cause', 'Action', 'Notes'];
+            
+            // Convertir les rapports en CSV
+            let csvContent = headers.join(',') + '\n';
+            
+            reports.forEach(report => {
+                const row = [
+                    report.timestamp ? report.timestamp.split('T')[0] : '',
+                    report.timestamp ? report.timestamp.split('T')[1].substring(0, 5) : '',
+                    report.poste || '',
+                    '"' + (report.description || '').replace(/"/g, '""') + '"', // Échappe les guillemets
+                    report.impact || '',
+                    report.employe || '',
+                    report.photo || '',
+                    '',  // Cause (à remplir manuellement)
+                    '',  // Action (à remplir manuellement)
+                    ''   // Notes
+                ];
+                csvContent += row.join(',') + '\n';
+            });
+
+            // Crée un blob et télécharge
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            const now = new Date();
+            const filename = `ARM-Rapports-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}.csv`;
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showStatus(`✅ ${reports.length} rapport(s) exporté(s) en CSV`, 'success');
+            console.log(`Fichier exporté: ${filename}`);
+        }
+
+        async function sendPhotosToOneDrive() {
+            const reports = JSON.parse(localStorage.getItem('armReports') || '[]');
+            const powerAutomateUrl = localStorage.getItem('powerAutomateUrl') || '';
+            
+            if (reports.length === 0) {
+                showStatus('❌ Aucun rapport à envoyer', 'error');
+                return;
+            }
+
+            if (!powerAutomateUrl) {
+                showStatus('❌ Veuillez d\'abord configurer l\'URL Power Automate dans ⚙️ Paramètres', 'error');
+                openSettingsModal();
+                return;
+            }
+
+            showStatus('<span class="loading-spinner"></span>Envoi des photos à OneDrive...', 'info');
+
+            try {
+                // Prépare les données pour Power Automate
+                const photosData = reports.map((report, index) => ({
+                    id: index + 1,
+                    date: report.timestamp ? report.timestamp.split('T')[0] : '',
+                    heure: report.timestamp ? report.timestamp.split('T')[1].substring(0, 5) : '',
+                    poste: report.poste || '',
+                    probleme: report.description || '',
+                    employe: report.employe || '',
+                    impact: report.impact || '',
+                    // Photo est vide si pas d'upload, la vraie photo reste locale
+                }));
+
+                // Envoie à Power Automate
+                const response = await fetch(powerAutomateUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        photos: photosData,
+                        total: reports.length,
+                        date: new Date().toISOString(),
+                        source: 'ARM-Rapport-Atelier'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erreur: ${response.status}`);
+                }
+
+                showStatus(`✅ ${reports.length} rapport(s) envoyé(s) à OneDrive!`, 'success');
+                console.log('Photos envoyées à Power Automate avec succès');
+
+            } catch (error) {
+                console.error('Erreur envoi OneDrive:', error);
+                showStatus('❌ Erreur lors de l\'envoi à OneDrive. Vérifiez l\'URL du workflow.', 'error');
+            }
+        }
+
+        function clearAllData() {
+            const reports = JSON.parse(localStorage.getItem('armReports') || '[]');
+            
+            if (reports.length === 0) {
+                showStatus('ℹ️ Aucune donnée à effacer', 'info');
+                return;
+            }
+            
+            if (confirm(`⚠️ Êtes-vous sûr? Cela va supprimer ${reports.length} rapport(s) de la mémoire.\n\nSi vous n'avez pas exporté les données, elles seront perdues!`)) {
+                localStorage.removeItem('armReports');
+                updateDataCount();
+                showStatus('🗑️ Toutes les données ont été effacées', 'success');
+            }
+        }
+
+        // ===== INIT =====
+        window.addEventListener('load', () => {
+            detectPoste();
+            updateDataCount(); // Affiche le nombre de rapports au démarrage
+            updateConnectionStatus(); // Affiche l'état de connexion
+            
+            // Ajouter bouton QR codes dans le header (si pas déjà présent)
+            const header = document.querySelector('.header');
+            if (header && !header.querySelector('.qr-btn-header')) {
+                const qrBtn = document.createElement('button');
+                qrBtn.className = 'btn-primary qr-btn-header';
+                qrBtn.style.marginTop = '12px';
+                qrBtn.style.width = '100%';
+                qrBtn.textContent = '🔲 Afficher QR Codes';
+                qrBtn.onclick = (e) => {
+                    e.preventDefault();
+                    showQRModal();
+                };
+                header.appendChild(qrBtn);
+            }
+            
+            // Message d'aide initial
+            showStatus('💡 Scanne le QR code de ton poste ou rentre-le manuellement', 'info');
+        });
+    </script>
+</body>
+</html>
