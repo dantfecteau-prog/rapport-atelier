@@ -573,7 +573,7 @@
                     <div style="margin-bottom: 8px;">
                         <strong>🔗 URL du Workflow Power Automate:</strong>
                     </div>
-                    <input type="text" id="powerAutomateUrl" placeholder="Colle l'URL du workflow ici" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 11px; margin-bottom: 8px;">
+                    <input type="text" id="powerAutomateUrl" placeholder="Colle l'URL du workflow ici" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 11px;">
                     <div style="color: #0066cc; cursor: pointer;" onclick="togglePowerAutomateHelp()">📚 Aide: Comment obtenir l'URL?</div>
                     <div id="powerAutomateHelp" style="display: none; margin-top: 8px; padding: 8px; background: white; border-left: 3px solid #0066cc; font-size: 11px; line-height: 1.5;">
                         <strong>Étapes:</strong><br>
@@ -660,6 +660,9 @@
 
         const NOTIFIES = ['dfecteau', 'Tony', 'Zachary'];
         const API_KEY = ''; // Sera défini via environment ou ne pas utiliser pour MVP
+        
+        // URL par défaut Power Automate
+        const DEFAULT_POWER_AUTOMATE_URL = 'https://defaulte56e7cc479b9477e86b87a02c09b8f.1a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/27/workflows/ea659053974b4b34b82dc6195beb9bb1/triggers/manual/paths/invoke?api-version=1';
 
         // ===== INITIALISATION =====
         let recognition = null;
@@ -756,8 +759,8 @@
 
         // ===== MODALES PARAMÈTRES =====
         function openSettingsModal() {
-            // Charge les valeurs sauvegardées
-            const savedUrl = localStorage.getItem('powerAutomateUrl') || '';
+            // Charge les valeurs sauvegardées, ou utilise les valeurs par défaut
+            const savedUrl = localStorage.getItem('powerAutomateUrl') || DEFAULT_POWER_AUTOMATE_URL;
             const savedEmail = localStorage.getItem('userEmail') || '';
             document.getElementById('powerAutomateUrlInput').value = savedUrl;
             document.getElementById('emailInput').value = savedEmail;
@@ -787,7 +790,7 @@
         }
 
         function updateConnectionStatus() {
-            const url = localStorage.getItem('powerAutomateUrl') || '';
+            const url = localStorage.getItem('powerAutomateUrl') || DEFAULT_POWER_AUTOMATE_URL;
             const email = localStorage.getItem('userEmail') || '';
             const statusEl = document.getElementById('connectionStatus');
             
@@ -1004,191 +1007,60 @@
             document.getElementById('correctionBox').classList.add('hidden');
             document.getElementById('statusMessage').innerHTML = '';
             removePhoto();
-            currentTranscript = '';
         }
 
         function showStatus(message, type) {
-            const statusDiv = document.getElementById('statusMessage');
-            if (message) {
-                statusDiv.className = `status ${type}`;
-                statusDiv.innerHTML = message;
-            } else {
-                statusDiv.innerHTML = '';
-            }
-        }
-
-        // ===== EXPORT & GESTION DONNÉES =====
-        let powerAutomateUrlStored = localStorage.getItem('powerAutomateUrl') || '';
-
-        function toggleOneDriveSettings() {
-            const settingsDiv = document.getElementById('oneDriveSettings');
-            settingsDiv.style.display = settingsDiv.style.display === 'none' ? 'block' : 'none';
-        }
-
-        function togglePowerAutomateHelp() {
-            const helpDiv = document.getElementById('powerAutomateHelp');
-            helpDiv.style.display = helpDiv.style.display === 'none' ? 'block' : 'none';
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.innerHTML = `<div class="status ${type}">${message}</div>`;
         }
 
         function updateDataCount() {
             const reports = JSON.parse(localStorage.getItem('armReports') || '[]');
-            document.getElementById('dataCount').textContent = `${reports.length} rapport${reports.length > 1 ? 's' : ''} enregistré${reports.length > 1 ? 's' : ''}`;
-            
-            // Affiche les paramètres Power Automate si des rapports existent
-            if (reports.length > 0) {
-                document.getElementById('oneDriveSettings').style.display = 'block';
-                const savedUrl = localStorage.getItem('powerAutomateUrl');
-                if (savedUrl) {
-                    document.getElementById('powerAutomateUrl').value = savedUrl;
-                }
-            }
+            document.getElementById('dataCount').textContent = `${reports.length} rapports enregistrés`;
         }
 
         function exportDataAsCSV() {
             const reports = JSON.parse(localStorage.getItem('armReports') || '[]');
-            
             if (reports.length === 0) {
-                showStatus('❌ Aucun rapport à exporter', 'error');
+                alert('❌ Aucun rapport à exporter');
                 return;
             }
 
-            // En-têtes CSV
-            const headers = ['Date', 'Heure', 'Poste', 'Problème', 'Impact', 'Employé', 'Photo?', 'Cause', 'Action', 'Notes'];
-            
-            // Convertir les rapports en CSV
-            let csvContent = headers.join(',') + '\n';
-            
+            let csv = 'Timestamp,Poste,Description,Impact,Employé,Photo\n';
             reports.forEach(report => {
-                const row = [
-                    report.timestamp ? report.timestamp.split('T')[0] : '',
-                    report.timestamp ? report.timestamp.split('T')[1].substring(0, 5) : '',
-                    report.poste || '',
-                    '"' + (report.description || '').replace(/"/g, '""') + '"', // Échappe les guillemets
-                    report.impact || '',
-                    report.employe || '',
-                    report.photo || '',
-                    '',  // Cause (à remplir manuellement)
-                    '',  // Action (à remplir manuellement)
-                    ''   // Notes
-                ];
-                csvContent += row.join(',') + '\n';
+                csv += `"${report.timestamp}","${report.poste}","${report.description}","${report.impact}","${report.employe}","${report.photo}"\n`;
             });
 
-            // Crée un blob et télécharge
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            
-            const now = new Date();
-            const filename = `ARM-Rapports-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}.csv`;
-            
-            link.setAttribute('href', url);
-            link.setAttribute('download', filename);
-            link.style.visibility = 'hidden';
-            
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            showStatus(`✅ ${reports.length} rapport(s) exporté(s) en CSV`, 'success');
-            console.log(`Fichier exporté: ${filename}`);
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `rapports-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
         }
 
-        async function sendPhotosToOneDrive() {
-            const reports = JSON.parse(localStorage.getItem('armReports') || '[]');
-            const powerAutomateUrl = localStorage.getItem('powerAutomateUrl') || '';
-            
-            if (reports.length === 0) {
-                showStatus('❌ Aucun rapport à envoyer', 'error');
-                return;
-            }
-
-            if (!powerAutomateUrl) {
-                showStatus('❌ Veuillez d\'abord configurer l\'URL Power Automate dans ⚙️ Paramètres', 'error');
-                openSettingsModal();
-                return;
-            }
-
-            showStatus('<span class="loading-spinner"></span>Envoi des photos à OneDrive...', 'info');
-
-            try {
-                // Prépare les données pour Power Automate
-                const photosData = reports.map((report, index) => ({
-                    id: index + 1,
-                    date: report.timestamp ? report.timestamp.split('T')[0] : '',
-                    heure: report.timestamp ? report.timestamp.split('T')[1].substring(0, 5) : '',
-                    poste: report.poste || '',
-                    probleme: report.description || '',
-                    employe: report.employe || '',
-                    impact: report.impact || '',
-                    // Photo est vide si pas d'upload, la vraie photo reste locale
-                }));
-
-                // Envoie à Power Automate
-                const response = await fetch(powerAutomateUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        photos: photosData,
-                        total: reports.length,
-                        date: new Date().toISOString(),
-                        source: 'ARM-Rapport-Atelier'
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Erreur: ${response.status}`);
-                }
-
-                showStatus(`✅ ${reports.length} rapport(s) envoyé(s) à OneDrive!`, 'success');
-                console.log('Photos envoyées à Power Automate avec succès');
-
-            } catch (error) {
-                console.error('Erreur envoi OneDrive:', error);
-                showStatus('❌ Erreur lors de l\'envoi à OneDrive. Vérifiez l\'URL du workflow.', 'error');
-            }
+        function sendPhotosToOneDrive() {
+            alert('📸 Fonctionnalité OneDrive à configurer avec Power Automate');
         }
 
         function clearAllData() {
-            const reports = JSON.parse(localStorage.getItem('armReports') || '[]');
-            
-            if (reports.length === 0) {
-                showStatus('ℹ️ Aucune donnée à effacer', 'info');
-                return;
-            }
-            
-            if (confirm(`⚠️ Êtes-vous sûr? Cela va supprimer ${reports.length} rapport(s) de la mémoire.\n\nSi vous n'avez pas exporté les données, elles seront perdues!`)) {
-                localStorage.removeItem('armReports');
+            if (confirm('⚠️ Êtes-vous sûr? Tous les rapports seront supprimés.')) {
+                localStorage.setItem('armReports', '[]');
                 updateDataCount();
-                showStatus('🗑️ Toutes les données ont été effacées', 'success');
+                alert('✅ Données effacées');
             }
         }
 
-        // ===== INIT =====
+        function togglePowerAutomateHelp() {
+            const helpEl = document.getElementById('powerAutomateHelp');
+            helpEl.style.display = helpEl.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // ===== INITIALISATION AU CHARGEMENT =====
         window.addEventListener('load', () => {
             detectPoste();
-            updateDataCount(); // Affiche le nombre de rapports au démarrage
-            updateConnectionStatus(); // Affiche l'état de connexion
-            
-            // Ajouter bouton QR codes dans le header (si pas déjà présent)
-            const header = document.querySelector('.header');
-            if (header && !header.querySelector('.qr-btn-header')) {
-                const qrBtn = document.createElement('button');
-                qrBtn.className = 'btn-primary qr-btn-header';
-                qrBtn.style.marginTop = '12px';
-                qrBtn.style.width = '100%';
-                qrBtn.textContent = '🔲 Afficher QR Codes';
-                qrBtn.onclick = (e) => {
-                    e.preventDefault();
-                    openQRModal();
-                };
-                header.appendChild(qrBtn);
-            }
-            
-            // Message d'aide initial
-            showStatus('💡 Scanne le QR code de ton poste ou rentre-le manuellement', 'info');
+            updateDataCount();
         });
     </script>
 </body>
