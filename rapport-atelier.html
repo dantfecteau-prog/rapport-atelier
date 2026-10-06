@@ -363,6 +363,46 @@
             display: none;
         }
 
+        .report-card {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+
+        .report-card-title {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .report-card-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .report-card-label {
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .report-card-value {
+            color: #666;
+            word-break: break-word;
+            text-align: right;
+            flex: 1;
+            margin-left: 8px;
+        }
+
+        .report-card-empty {
+            text-align: center;
+            color: #999;
+            padding: 20px;
+        }
+
         .qr-code-container {
             text-align: center;
             margin: 20px 0;
@@ -490,6 +530,7 @@
             <p>Les Armoires Raynald Marcoux</p>
             <div class="header-buttons">
                 <button class="btn-icon" onclick="openQRModal()" title="Afficher QR Codes">🔲</button>
+                <button class="btn-icon" onclick="openReportsModal()" title="Voir les rapports">👁️</button>
                 <button class="btn-icon" onclick="openSettingsModal()" title="Paramètres">⚙️</button>
             </div>
         </div>
@@ -569,21 +610,6 @@
                 <div style="font-size: 12px; color: #666; margin-top: 10px;">
                     <span id="dataCount">0 rapports enregistrés</span>
                 </div>
-                <div id="oneDriveSettings" style="margin-top: 15px; padding: 12px; background: #f0f8ff; border-radius: 8px; font-size: 12px; display: none;">
-                    <div style="margin-bottom: 8px;">
-                        <strong>🔗 URL du Workflow Power Automate:</strong>
-                    </div>
-                    <input type="text" id="powerAutomateUrl" placeholder="Colle l'URL du workflow ici" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 11px;">
-                    <div style="color: #0066cc; cursor: pointer;" onclick="togglePowerAutomateHelp()">📚 Aide: Comment obtenir l'URL?</div>
-                    <div id="powerAutomateHelp" style="display: none; margin-top: 8px; padding: 8px; background: white; border-left: 3px solid #0066cc; font-size: 11px; line-height: 1.5;">
-                        <strong>Étapes:</strong><br>
-                        1. Va sur <a href="https://make.powerautomate.com" target="_blank" style="color: #0066cc;">Power Automate</a><br>
-                        2. Crée un workflow "Cloud flow" → "Instant cloud flow"<br>
-                        3. Ajoute un trigger "When a HTTP request is received"<br>
-                        4. Copie l'URL générée et colle-la ici<br>
-                        5. Clique "Envoyer à OneDrive" pour envoyer les photos
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -594,6 +620,24 @@
             <p style="font-size: 12px; margin-bottom: 16px; color: #666;">Imprimer et plastifier. Scanner pour auto-remplir le poste.</p>
             <div id="qrContainer"></div>
             <button class="btn-primary" onclick="closeQRModal()" style="width: 100%; margin-top: 16px;">Fermer</button>
+        </div>
+    </div>
+
+    <!-- Modale pour voir les rapports -->
+    <div class="modal" id="reportsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                👁️ Rapports Enregistrés
+                <button class="modal-close" onclick="closeReportsModal()">✕</button>
+            </div>
+            
+            <div id="reportsContainer">
+                <div class="report-card-empty">Aucun rapport enregistré</div>
+            </div>
+
+            <div class="modal-buttons">
+                <button class="modal-save" onclick="closeReportsModal()">Fermer</button>
+            </div>
         </div>
     </div>
 
@@ -755,6 +799,55 @@
 
         function closeQRModal() {
             document.getElementById('qrModal').classList.remove('show');
+        }
+
+        // ===== GESTION RAPPORTS =====
+        function openReportsModal() {
+            const reports = JSON.parse(localStorage.getItem('armReports') || '[]');
+            const container = document.getElementById('reportsContainer');
+
+            if (reports.length === 0) {
+                container.innerHTML = '<div class="report-card-empty">📭 Aucun rapport enregistré</div>';
+            } else {
+                container.innerHTML = '';
+                reports.forEach((report, index) => {
+                    const date = new Date(report.timestamp).toLocaleString('fr-CA');
+                    const card = document.createElement('div');
+                    card.className = 'report-card';
+                    card.innerHTML = `
+                        <div class="report-card-title">📝 Rapport #${index + 1}</div>
+                        <div class="report-card-item">
+                            <span class="report-card-label">Date:</span>
+                            <span class="report-card-value">${date}</span>
+                        </div>
+                        <div class="report-card-item">
+                            <span class="report-card-label">Poste:</span>
+                            <span class="report-card-value">${report.poste}</span>
+                        </div>
+                        <div class="report-card-item">
+                            <span class="report-card-label">Employé:</span>
+                            <span class="report-card-value">${report.employe}</span>
+                        </div>
+                        <div class="report-card-item">
+                            <span class="report-card-label">Impact:</span>
+                            <span class="report-card-value">${report.impact}</span>
+                        </div>
+                        <div class="report-card-item">
+                            <span class="report-card-label">Description:</span>
+                        </div>
+                        <div style="margin-left: 12px; padding: 8px; background: white; border-radius: 4px; font-size: 12px; line-height: 1.4;">
+                            ${report.description}
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            }
+
+            document.getElementById('reportsModal').classList.add('show');
+        }
+
+        function closeReportsModal() {
+            document.getElementById('reportsModal').classList.remove('show');
         }
 
         // ===== MODALES PARAMÈTRES =====
@@ -1050,11 +1143,6 @@
                 updateDataCount();
                 alert('✅ Données effacées');
             }
-        }
-
-        function togglePowerAutomateHelp() {
-            const helpEl = document.getElementById('powerAutomateHelp');
-            helpEl.style.display = helpEl.style.display === 'none' ? 'block' : 'none';
         }
 
         // ===== INITIALISATION AU CHARGEMENT =====
