@@ -1,0 +1,4 @@
+Numéro,Date/Heure,Poste de Travail,Employé,Email,Impact,Description du Problème,Statut,Photo,Notes
+1,2026-10-06 14:30:45,Banc de scie,David Fecteau,dfecteau@raynaldmarcoux.com,Arrêt production,Lame qui vibre,✅ Reçu,Oui,
+2,2026-10-06 15:00:00,CNC,David Fecteau,dfecteau@raynaldmarcoux.com,Ralentissement,Usure sur la pièce,✅ Reçu,Non,
+3,2026-10-06 15:45:00,Edgeuse,David Fecteau,dfecteau@raynaldmarcoux.com,Qualité,Pièce hors tolérance,✅ Reçu,Oui,
