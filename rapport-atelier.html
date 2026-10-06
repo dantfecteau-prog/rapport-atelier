@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rapport Atelier - ARM test</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <title>Rapport Atelier - ARM</title>
     <style>
         * {
             margin: 0;
@@ -725,33 +724,22 @@
                 const baseUrl = window.location.href.split('?')[0];
                 const url = `${baseUrl}?poste=${encodeURIComponent(poste)}`;
 
-                // Créer un conteneur pour le QR code
-                const qrCodeContainer = document.createElement('div');
-                qrCodeContainer.id = `qrcode-${index}`;
-                qrCodeContainer.style.display = 'inline-block';
-                qrCodeContainer.style.padding = '10px';
-                qrCodeContainer.style.border = '2px solid #1f4788';
-                qrCodeContainer.style.borderRadius = '8px';
-                qrCodeContainer.style.backgroundColor = 'white';
-
+                // Créer une image QR via l'API qrserver (100% fiable!)
+                const qrImage = document.createElement('img');
+                qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}&bgcolor=ffffff&color=1f4788`;
+                qrImage.alt = `QR Code - ${poste}`;
+                qrImage.style.maxWidth = '200px';
+                qrImage.style.height = 'auto';
+                qrImage.style.border = '2px solid #1f4788';
+                qrImage.style.borderRadius = '8px';
+                qrImage.style.display = 'block';
+                qrImage.style.margin = '0 auto';
+                qrImage.style.backgroundColor = 'white';
+                qrImage.style.padding = '10px';
+                
                 qrDiv.appendChild(title);
-                qrDiv.appendChild(qrCodeContainer);
+                qrDiv.appendChild(qrImage);
                 container.appendChild(qrDiv);
-
-                // Générer le QR code avec qrcode.js
-                try {
-                    new QRCode(qrCodeContainer, {
-                        text: url,
-                        width: 200,
-                        height: 200,
-                        colorDark: '#1f4788',
-                        colorLight: '#ffffff',
-                        correctLevel: QRCode.CorrectLevel.H
-                    });
-                } catch(e) {
-                    console.error('Erreur génération QR:', e);
-                    qrCodeContainer.innerHTML = '⚠️ Erreur génération QR';
-                }
             });
         }
 
@@ -1194,7 +1182,7 @@
                 qrBtn.textContent = '🔲 Afficher QR Codes';
                 qrBtn.onclick = (e) => {
                     e.preventDefault();
-                    showQRModal();
+                    openQRModal();
                 };
                 header.appendChild(qrBtn);
             }
