@@ -602,10 +602,6 @@
                 <div class="section-title">Gestion des Données</div>
                 <div class="button-group">
                     <button class="btn-primary" onclick="exportDataAsCSV()">📊 Exporter en CSV</button>
-                    <button class="btn-success" onclick="sendPhotosToOneDrive()">📸 Envoyer à OneDrive</button>
-                </div>
-                <div class="button-group">
-                    <button class="btn-warning" onclick="clearAllData()">🗑️ Effacer tout</button>
                 </div>
                 <div style="font-size: 12px; color: #666; margin-top: 10px;">
                     <span id="dataCount">0 rapports enregistrés</span>
@@ -832,6 +828,10 @@
                             <span class="report-card-value">${report.impact}</span>
                         </div>
                         <div class="report-card-item">
+                            <span class="report-card-label">Statut:</span>
+                            <span class="report-card-value">${report.sent ? '✅ Envoyé' : '⏳ Local'}</span>
+                        </div>
+                        <div class="report-card-item">
                             <span class="report-card-label">Description:</span>
                         </div>
                         <div style="margin-left: 12px; padding: 8px; background: white; border-radius: 4px; font-size: 12px; line-height: 1.4;">
@@ -1054,29 +1054,59 @@
                 description,
                 impact: impact || 'Non spécifié',
                 employe,
-                photo: photoFile ? 'inclus' : 'non'
+                email: localStorage.getItem('userEmail') || DEFAULT_USER_EMAIL,
+                photo: photoFile ? 'inclus' : 'non',
+                sent: false
             };
 
             try {
-                showStatus('<span class="loading-spinner"></span>Soumission en cours...', 'info');
+                showStatus('<span class="loading-spinner"></span>Envoi vers Power Automate...', 'info');
 
+                // Envoyer vers Power Automate
+                const powerAutomateUrl = localStorage.getItem('powerAutomateUrl') || DEFAULT_POWER_AUTOMATE_URL;
+                
+                const response = await fetch(powerAutomateUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        poste: reportData.poste,
+                        description: reportData.description,
+                        impact: reportData.impact,
+                        employe: reportData.employe,
+                        email: reportData.email,
+                        timestamp: reportData.timestamp,
+                        photo: reportData.photo
+                    })
+                });
+
+                if (response.ok) {
+                    reportData.sent = true;
+                    showStatus('✅ Rapport envoyé à OneDrive avec succès!', 'success');
+                } else {
+                    showStatus('⚠️ Rapport sauvegardé localement (erreur Power Automate)', 'warning');
+                }
+
+                // Enregistrer aussi localement
                 const reports = JSON.parse(localStorage.getItem('armReports') || '[]');
                 reports.push(reportData);
                 localStorage.setItem('armReports', JSON.stringify(reports));
 
-                await notifyTeams(reportData);
-
-                showStatus(`✅ Rapport #${reports.length} soumis avec succès!`, 'success');
                 updateDataCount();
                 setTimeout(() => resetForm(), 2000);
             } catch (error) {
-                showStatus('❌ Erreur lors de la soumission', 'error');
-                console.error(error);
+                showStatus('⚠️ Rapport sauvegardé localement (erreur réseau)', 'warning');
+                console.error('Erreur:', error);
+                
+                // Enregistrer localement même si erreur
+                const reports = JSON.parse(localStorage.getItem('armReports') || '[]');
+                reports.push(reportData);
+                localStorage.setItem('armReports', JSON.stringify(reports));
+                
+                updateDataCount();
+                setTimeout(() => resetForm(), 2000);
             }
-        }
-
-        async function notifyTeams(reportData) {
-            console.log('🔔 Notif Teams:', reportData);
         }
 
         function resetForm() {
@@ -1096,7 +1126,8 @@
 
         function updateDataCount() {
             const reports = JSON.parse(localStorage.getItem('armReports') || '[]');
-            document.getElementById('dataCount').textContent = `${reports.length} rapports enregistrés`;
+            const sent = reports.filter(r => r.sent).length;
+            document.getElementById('dataCount').textContent = `${reports.length} rapports (${sent} envoyés)`;
         }
 
         function exportDataAsCSV() {
@@ -1106,30 +1137,20 @@
                 return;
             }
 
-            let csv = 'Timestamp,Poste,Description,Impact,Employé,Photo\n';
+            let csv = 'Timestamp,Poste,Description,Impact,Employé,Email,Photo,Statut\n';
             reports.forEach(report => {
-                csv += `"${report.timestamp}","${report.poste}","${report.description}","${report.impact}","${report.employe}","${report.photo}"\n`;
+                csv += `"${report.timestamp}","${report.poste}","${report.description}","${report.impact}","${report.employe}","${report.email}","${report.photo}","${report.sent ? 'Envoyé' : 'Local'}"\n`;
             });
 
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `rapports-${new Date().toISOString().split('T')[0]}.csv`;
-            a.click();
-            window.URL.revokeObjectURL(url);
-        }
-
-        function sendPhotosToOneDrive() {
-            alert('📸 Fonctionnalité OneDrive à configurer avec Power Automate');
-        }
-
-        function clearAllData() {
-            if (confirm('⚠️ Êtes-vous sûr? Tous les rapports seront supprimés.')) {
-                localStorage.setItem('armReports', '[]');
-                updateDataCount();
-                alert('✅ Données effacées');
-            }
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `rapports-${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         // ===== INITIALISATION AU CHARGEMENT =====
