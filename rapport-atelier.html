@@ -663,7 +663,7 @@
                 <label>📧 Email pour les rapports</label>
                 <input type="text" id="emailInput" 
                     placeholder="ton@email.com"
-                    value="">
+                    value="dfecteau@raynaldmarcoux.com">
                 <p style="font-size: 11px; color: #999; margin-top: 6px;">
                     Les rapports seront envoyés à cet email.
                 </p>
@@ -704,9 +704,8 @@
 
         const NOTIFIES = ['dfecteau', 'Tony', 'Zachary'];
         const API_KEY = ''; // Sera défini via environment ou ne pas utiliser pour MVP
-        
-        // URL par défaut Power Automate
-        const DEFAULT_POWER_AUTOMATE_URL = 'https://defaulte56e7cc479b9477e86b87a02c09b8f.1a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/27/workflows/ea659053974b4b34b82dc6195beb9bb1/triggers/manual/paths/invoke?api-version=1';
+        const DEFAULT_POWER_AUTOMATE_URL = 'https://defaulte56e7cc479b9477e86b87a02c09b8f.1a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/05/workflows/f3e174610d7f4300a216551b5ead8886/triggers/manual/paths/invoke?api-version=1';
+        const DEFAULT_USER_EMAIL = 'dfecteau@raynaldmarcoux.com';
 
         // ===== INITIALISATION =====
         let recognition = null;
@@ -852,9 +851,8 @@
 
         // ===== MODALES PARAMÈTRES =====
         function openSettingsModal() {
-            // Charge les valeurs sauvegardées, ou utilise les valeurs par défaut
             const savedUrl = localStorage.getItem('powerAutomateUrl') || DEFAULT_POWER_AUTOMATE_URL;
-            const savedEmail = localStorage.getItem('userEmail') || '';
+            const savedEmail = localStorage.getItem('userEmail') || DEFAULT_USER_EMAIL;
             document.getElementById('powerAutomateUrlInput').value = savedUrl;
             document.getElementById('emailInput').value = savedEmail;
             updateConnectionStatus();
@@ -874,8 +872,8 @@
                 return;
             }
 
-            localStorage.setItem('powerAutomateUrl', url);
-            localStorage.setItem('userEmail', email);
+            localStorage.setItem('powerAutomateUrl', url || DEFAULT_POWER_AUTOMATE_URL);
+            localStorage.setItem('userEmail', email || DEFAULT_USER_EMAIL);
             
             updateConnectionStatus();
             alert('✅ Paramètres enregistrés avec succès!');
@@ -884,7 +882,7 @@
 
         function updateConnectionStatus() {
             const url = localStorage.getItem('powerAutomateUrl') || DEFAULT_POWER_AUTOMATE_URL;
-            const email = localStorage.getItem('userEmail') || '';
+            const email = localStorage.getItem('userEmail') || DEFAULT_USER_EMAIL;
             const statusEl = document.getElementById('connectionStatus');
             
             if (url && email) {
@@ -960,10 +958,8 @@
         }
 
         function correctTextLocally(text) {
-            // Nettoyage basique + standardisation termes atelier
             let corrected = text.trim();
             
-            // Standardise les termes courants
             const replacements = {
                 'bande de shant': 'bande de chant',
                 'band de chant': 'bande de chant',
@@ -983,10 +979,8 @@
                 corrected = corrected.replace(regex, replacements[key]);
             });
             
-            // Capitalise la première lettre
             corrected = corrected.charAt(0).toUpperCase() + corrected.slice(1);
             
-            // Ajoute point final si absent
             if (!corrected.match(/[.!?]$/)) {
                 corrected += '.';
             }
@@ -999,7 +993,6 @@
             box.innerHTML = `<strong>✅ Texte corrigé:</strong><br>${response}`;
             box.classList.remove('hidden');
 
-            // Extraire automatiquement les champs
             const problemeMatch = response.match(/PROBLÈME:\s*(.+?)(?=\n|CAUSE:|$)/i);
             if (problemeMatch) {
                 const problemeText = problemeMatch[1].trim();
@@ -1055,7 +1048,6 @@
                 return;
             }
 
-            // Préparer les données
             const reportData = {
                 timestamp: new Date().toISOString(),
                 poste,
@@ -1068,17 +1060,14 @@
             try {
                 showStatus('<span class="loading-spinner"></span>Soumission en cours...', 'info');
 
-                // Simuler l'envoi (en production, ça irait à un serveur)
-                // Pour le MVP, on stocke en localStorage et on prépare l'export Excel
                 const reports = JSON.parse(localStorage.getItem('armReports') || '[]');
                 reports.push(reportData);
                 localStorage.setItem('armReports', JSON.stringify(reports));
 
-                // Notifier les utilisateurs Teams (simulation)
                 await notifyTeams(reportData);
 
                 showStatus(`✅ Rapport #${reports.length} soumis avec succès!`, 'success');
-                updateDataCount(); // Mets à jour le compteur
+                updateDataCount();
                 setTimeout(() => resetForm(), 2000);
             } catch (error) {
                 showStatus('❌ Erreur lors de la soumission', 'error');
@@ -1087,9 +1076,7 @@
         }
 
         async function notifyTeams(reportData) {
-            // Webhook Teams simulé (à configurer en production)
             console.log('🔔 Notif Teams:', reportData);
-            // En production: POST vers webhook Teams avec format adapté
         }
 
         function resetForm() {
@@ -1149,6 +1136,11 @@
         window.addEventListener('load', () => {
             detectPoste();
             updateDataCount();
+            const savedUrl = localStorage.getItem('powerAutomateUrl') || DEFAULT_POWER_AUTOMATE_URL;
+            const savedEmail = localStorage.getItem('userEmail') || DEFAULT_USER_EMAIL;
+            document.getElementById('powerAutomateUrlInput').value = savedUrl;
+            document.getElementById('emailInput').value = savedEmail;
+            updateConnectionStatus();
         });
     </script>
 </body>
