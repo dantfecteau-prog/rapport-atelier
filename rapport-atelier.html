@@ -526,7 +526,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>📋 Rapport Atelier test </h1>
+            <h1>📋 Rapport Atelier</h1>
             <p>Les Armoires Raynald Marcoux</p>
             <div class="header-buttons">
                 <button class="btn-icon" onclick="openQRModal()" title="Afficher QR Codes">🔲</button>
@@ -619,13 +619,14 @@
         </div>
     </div>
 
+    <!-- Modale pour voir les rapports -->
     <div class="modal" id="reportsModal">
         <div class="modal-content">
             <div class="modal-header">
                 👁️ Rapports Enregistrés
                 <button class="modal-close" onclick="closeReportsModal()">✕</button>
             </div>
-
+            
             <div id="reportsContainer">
                 <div class="report-card-empty">Aucun rapport enregistré</div>
             </div>
@@ -636,16 +637,17 @@
         </div>
     </div>
 
+    <!-- Modale Paramètres Power Automate -->
     <div class="modal" id="settingsModal">
         <div class="modal-content">
             <div class="modal-header">
                 ⚙️ Paramètres
                 <button class="modal-close" onclick="closeSettingsModal()">✕</button>
             </div>
-
+            
             <div class="modal-field">
                 <label>🔗 URL Power Automate (Webhook)</label>
-                <textarea id="powerAutomateUrlInput"
+                <textarea id="powerAutomateUrlInput" 
                     placeholder="Colle l'URL du webhook Power Automate ici..."
                     style="height: 80px; font-size: 12px;"></textarea>
                 <p style="font-size: 11px; color: #999; margin-top: 6px;">
@@ -655,7 +657,7 @@
 
             <div class="modal-field">
                 <label>📧 Email pour les rapports</label>
-                <input type="text" id="emailInput"
+                <input type="text" id="emailInput" 
                     placeholder="ton@email.com"
                     value="dfecteau@raynaldmarcoux.com">
                 <p style="font-size: 11px; color: #999; margin-top: 6px;">
@@ -684,6 +686,7 @@
     </div>
 
     <script>
+        // ===== CONFIGURATION =====
         const POSTES = [
             'Banc de scie',
             'CNC',
@@ -700,10 +703,12 @@
         const DEFAULT_POWER_AUTOMATE_URL = 'https://defaulte56e7cc479b9477e86b87a02c09b8f.1a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/05/workflows/f3e174610d7f4300a216551b5ead8886/triggers/manual/paths/invoke?api-version=1';
         const DEFAULT_USER_EMAIL = 'dfecteau@raynaldmarcoux.com';
 
+        // ===== INITIALISATION =====
         let recognition = null;
         let isListening = false;
         let currentTranscript = '';
         let photoFile = null;
+        let photoBase64 = null;
 
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -740,26 +745,12 @@
             };
         }
 
-        function showStatus(message, type = 'info') {
-            const statusEl = document.getElementById('statusMessage');
-            if (!statusEl) return;
-            statusEl.className = `status ${type}`;
-            statusEl.innerHTML = message;
-        }
-
-        function updateDataCount() {
-            const reports = JSON.parse(localStorage.getItem('armReports') || '[]');
-            const element = document.getElementById('dataCount');
-            if (!element) return;
-            element.textContent = `${reports.length} rapport${reports.length > 1 ? 's' : ''} enregistré${reports.length > 1 ? 's' : ''}`;
-        }
-
+        // ===== GESTION QR CODES =====
         function generateQRCodes() {
             const container = document.getElementById('qrContainer');
-            if (!container) return;
             container.innerHTML = '';
 
-            POSTES.forEach((poste) => {
+            POSTES.forEach((poste, index) => {
                 const qrDiv = document.createElement('div');
                 qrDiv.style.marginBottom = '24px';
                 qrDiv.style.textAlign = 'center';
@@ -772,9 +763,11 @@
                 title.style.color = '#1f4788';
                 title.textContent = poste;
 
+                // Générer l'URL pour ce poste
                 const baseUrl = window.location.href.split('?')[0];
                 const url = `${baseUrl}?poste=${encodeURIComponent(poste)}`;
 
+                // Créer une image QR via l'API qrserver
                 const qrImage = document.createElement('img');
                 qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}&bgcolor=ffffff&color=1f4788`;
                 qrImage.alt = `QR Code - ${poste}`;
@@ -786,7 +779,7 @@
                 qrImage.style.margin = '0 auto';
                 qrImage.style.backgroundColor = 'white';
                 qrImage.style.padding = '10px';
-
+                
                 qrDiv.appendChild(title);
                 qrDiv.appendChild(qrImage);
                 container.appendChild(qrDiv);
@@ -804,6 +797,7 @@
             document.getElementById('qrModal').classList.remove('show');
         }
 
+        // ===== GESTION RAPPORTS =====
         function openReportsModal() {
             const reports = JSON.parse(localStorage.getItem('armReports') || '[]');
             const container = document.getElementById('reportsContainer');
@@ -839,6 +833,10 @@
                             <span class="report-card-value">${report.sent ? '✅ Envoyé' : '⏳ Local'}</span>
                         </div>
                         <div class="report-card-item">
+                            <span class="report-card-label">Photo:</span>
+                            <span class="report-card-value">${report.photo ? '✅ Oui' : '❌ Non'}</span>
+                        </div>
+                        <div class="report-card-item">
                             <span class="report-card-label">Description:</span>
                         </div>
                         <div style="margin-left: 12px; padding: 8px; background: white; border-radius: 4px; font-size: 12px; line-height: 1.4;">
@@ -856,6 +854,7 @@
             document.getElementById('reportsModal').classList.remove('show');
         }
 
+        // ===== MODALES PARAMÈTRES =====
         function openSettingsModal() {
             const savedUrl = localStorage.getItem('powerAutomateUrl') || DEFAULT_POWER_AUTOMATE_URL;
             const savedEmail = localStorage.getItem('userEmail') || DEFAULT_USER_EMAIL;
@@ -880,7 +879,7 @@
 
             localStorage.setItem('powerAutomateUrl', url || DEFAULT_POWER_AUTOMATE_URL);
             localStorage.setItem('userEmail', email || DEFAULT_USER_EMAIL);
-
+            
             updateConnectionStatus();
             alert('✅ Paramètres enregistrés avec succès!');
             closeSettingsModal();
@@ -890,7 +889,7 @@
             const url = localStorage.getItem('powerAutomateUrl') || DEFAULT_POWER_AUTOMATE_URL;
             const email = localStorage.getItem('userEmail') || DEFAULT_USER_EMAIL;
             const statusEl = document.getElementById('connectionStatus');
-
+            
             if (url && email) {
                 statusEl.innerHTML = '✅ Connecté et prêt!<br><small>' + email + '</small>';
                 statusEl.style.color = 'var(--success)';
@@ -903,6 +902,7 @@
             }
         }
 
+        // ===== DÉTECTION POSTE VIA URL =====
         function detectPoste() {
             const params = new URLSearchParams(window.location.search);
             const poste = params.get('poste');
@@ -911,6 +911,7 @@
             }
         }
 
+        // ===== DICTÉE =====
         function startListening() {
             if (!recognition) {
                 showStatus('Reconnaissance vocale non supportée sur ce navigateur', 'error');
@@ -939,9 +940,6 @@
             } else {
                 startBtn.classList.remove('hidden');
                 stopBtn.classList.add('hidden');
-                if (!document.getElementById('statusMessage').innerHTML.includes('✅ Texte corrigé')) {
-                    document.getElementById('statusMessage').innerHTML = '';
-                }
             }
         }
 
@@ -951,9 +949,10 @@
             box.classList.remove('hidden');
         }
 
+        // ===== CORRECTION TEXTE =====
         function correctWithClaude(text) {
             showStatus('<span class="loading-spinner"></span>Correction en cours...', 'info');
-
+            
             setTimeout(() => {
                 const corrected = correctTextLocally(text);
                 parseClaudeResponse(corrected, text);
@@ -963,7 +962,7 @@
 
         function correctTextLocally(text) {
             let corrected = text.trim();
-
+            
             const replacements = {
                 'bande de shant': 'bande de chant',
                 'band de chant': 'bande de chant',
@@ -977,18 +976,18 @@
                 'elle bloque': 'reste bloquée',
                 'elle buzz': 'fait du bruit'
             };
-
+            
             Object.keys(replacements).forEach(key => {
                 const regex = new RegExp(key, 'gi');
                 corrected = corrected.replace(regex, replacements[key]);
             });
-
+            
             corrected = corrected.charAt(0).toUpperCase() + corrected.slice(1);
-
+            
             if (!corrected.match(/[.!?]$/)) {
                 corrected += '.';
             }
-
+            
             return `TEXTE CORRIGÉ: ${corrected}\n\nPROBLÈME: ${corrected}\n\nCAUSE: (à déterminer)\n\nACTION: (à déterminer)`;
         }
 
@@ -1006,11 +1005,15 @@
             }
         }
 
+        // ===== GESTION PHOTOS =====
         document.getElementById('photo')?.addEventListener('change', (e) => {
             photoFile = e.target.files[0];
             if (photoFile) {
                 const reader = new FileReader();
                 reader.onload = (event) => {
+                    // CORRECTION #1: Sauvegarder la photo en Base64
+                    photoBase64 = event.target.result;
+                    
                     const preview = document.getElementById('photoPreview');
                     preview.innerHTML = `
                         <div class="photo-preview">
@@ -1025,45 +1028,12 @@
 
         function removePhoto() {
             photoFile = null;
+            photoBase64 = null;
             document.getElementById('photo').value = '';
             document.getElementById('photoPreview').innerHTML = '';
         }
 
-        function getPhotoBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-            });
-        }
-
-        async function sendToPowerAutomate(webhookUrl, reportData) {
-            const payload = {
-                ...reportData,
-                source: 'rapport-atelier.html',
-                email: localStorage.getItem('userEmail') || DEFAULT_USER_EMAIL
-            };
-
-            if (photoFile) {
-                payload.photoDataUrl = await getPhotoBase64(photoFile);
-            }
-
-            const response = await fetch(webhookUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) {
-                throw new Error(`Erreur Power Automate: ${response.status} ${response.statusText}`);
-            }
-
-            return true;
-        }
-
+        // ===== SOUMISSION =====
         async function submitReport() {
             const poste = document.getElementById('poste').value;
             const description = document.getElementById('description').value;
@@ -1091,93 +1061,123 @@
                 description,
                 impact: impact || 'Non spécifié',
                 employe,
-                photo: photoFile ? 'inclus' : 'non',
+                email: localStorage.getItem('userEmail') || DEFAULT_USER_EMAIL,
+                photo: photoBase64 ? true : false,
                 sent: false
             };
 
             try {
-                showStatus('<span class="loading-spinner"></span>Soumission en cours...', 'info');
+                showStatus('<span class="loading-spinner"></span>Envoi vers Power Automate...', 'info');
 
+                const powerAutomateUrl = localStorage.getItem('powerAutomateUrl') || DEFAULT_POWER_AUTOMATE_URL;
+                
+                // CORRECTION #2: Envoyer la photo en Base64
+                const payloadToSend = {
+                    poste: reportData.poste,
+                    description: reportData.description,
+                    impact: reportData.impact,
+                    employe: reportData.employe,
+                    email: reportData.email,
+                    timestamp: reportData.timestamp,
+                    photo: photoBase64 ? {
+                        base64: photoBase64,
+                        filename: photoFile ? photoFile.name : 'photo.jpg',
+                        size: photoFile ? photoFile.size : 0
+                    } : null
+                };
+                
+                const response = await fetch(powerAutomateUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payloadToSend)
+                });
+
+                if (response.ok) {
+                    reportData.sent = true;
+                    showStatus('✅ Rapport et photo envoyés avec succès!', 'success');
+                } else {
+                    showStatus('⚠️ Rapport sauvegardé localement (erreur Power Automate)', 'warning');
+                }
+
+                // Enregistrer aussi localement
                 const reports = JSON.parse(localStorage.getItem('armReports') || '[]');
                 reports.push(reportData);
                 localStorage.setItem('armReports', JSON.stringify(reports));
 
-                const webhookUrl = localStorage.getItem('powerAutomateUrl') || DEFAULT_POWER_AUTOMATE_URL;
-                if (webhookUrl) {
-                    try {
-                        await sendToPowerAutomate(webhookUrl, reportData);
-                        const savedReports = JSON.parse(localStorage.getItem('armReports') || '[]');
-                        savedReports[savedReports.length - 1].sent = true;
-                        localStorage.setItem('armReports', JSON.stringify(savedReports));
-                    } catch (error) {
-                        console.error('Erreur envoi webhook:', error);
-                    }
-                }
-
-                showStatus(`✅ Rapport #${reports.length} soumis avec succès!`, 'success');
                 updateDataCount();
                 setTimeout(() => resetForm(), 2000);
             } catch (error) {
-                showStatus('❌ Erreur lors de la soumission', 'error');
-                console.error(error);
+                showStatus('⚠️ Rapport sauvegardé localement (erreur réseau)', 'warning');
+                console.error('Erreur:', error);
+                
+                const reports = JSON.parse(localStorage.getItem('armReports') || '[]');
+                reports.push(reportData);
+                localStorage.setItem('armReports', JSON.stringify(reports));
+                
+                updateDataCount();
+                setTimeout(() => resetForm(), 2000);
             }
-        }
-
-        function exportDataAsCSV() {
-            const reports = JSON.parse(localStorage.getItem('armReports') || '[]');
-            if (!reports.length) {
-                showStatus('📭 Aucun rapport à exporter', 'info');
-                return;
-            }
-
-            const headers = ['timestamp', 'poste', 'description', 'impact', 'employe', 'photo', 'sent'];
-            const csvRows = [headers.join(',')];
-
-            reports.forEach(report => {
-                const row = headers.map(header => {
-                    const value = report[header] ?? '';
-                    return `"${String(value).replace(/"/g, '""')}"`;
-                });
-                csvRows.push(row.join(','));
-            });
-
-            const csvContent = csvRows.join('\n');
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = 'rapports-atelier.csv';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-
-            showStatus('✅ CSV exporté avec succès', 'success');
-        }
-
-        function clearAllData() {
-            const confirmed = confirm('Voulez-vous vraiment supprimer tous les rapports enregistrés ?');
-            if (!confirmed) return;
-
-            localStorage.removeItem('armReports');
-            updateDataCount();
-            showStatus('🗑️ Tous les rapports ont été supprimés', 'info');
         }
 
         function resetForm() {
             document.getElementById('description').value = '';
             document.getElementById('impact').value = '';
             document.getElementById('employe').value = '';
-            document.getElementById('photo').value = '';
-            document.getElementById('photoPreview').innerHTML = '';
-            photoFile = null;
             document.getElementById('transcriptBox').classList.add('hidden');
             document.getElementById('correctionBox').classList.add('hidden');
+            document.getElementById('statusMessage').innerHTML = '';
+            removePhoto();
         }
 
-        detectPoste();
-        updateDataCount();
-        updateConnectionStatus();
+        function showStatus(message, type) {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function updateDataCount() {
+            const reports = JSON.parse(localStorage.getItem('armReports') || '[]');
+            const sent = reports.filter(r => r.sent).length;
+            document.getElementById('dataCount').textContent = `${reports.length} rapports (${sent} envoyés)`;
+        }
+
+        function exportDataAsCSV() {
+            const reports = JSON.parse(localStorage.getItem('armReports') || '[]');
+            if (reports.length === 0) {
+                alert('❌ Aucun rapport à exporter');
+                return;
+            }
+
+            let csv = 'Timestamp,Poste,Description,Impact,Employé,Email,Photo,Statut\n';
+            reports.forEach(report => {
+                csv += `"${report.timestamp}","${report.poste}","${report.description}","${report.impact}","${report.employe}","${report.email}","${report.photo ? '✅ Oui' : '❌ Non'}","${report.sent ? 'Envoyé' : 'Local'}"\n`;
+            });
+
+            // CORRECTION #1: Ajouter le BOM UTF-8 pour Excel
+            const BOM = '\uFEFF';
+            const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `rapports-${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // ===== INITIALISATION AU CHARGEMENT =====
+        window.addEventListener('load', () => {
+            detectPoste();
+            updateDataCount();
+            const savedUrl = localStorage.getItem('powerAutomateUrl') || DEFAULT_POWER_AUTOMATE_URL;
+            const savedEmail = localStorage.getItem('userEmail') || DEFAULT_USER_EMAIL;
+            document.getElementById('powerAutomateUrlInput').value = savedUrl;
+            document.getElementById('emailInput').value = savedEmail;
+            updateConnectionStatus();
+            showStatus('💡 Scanne le QR code de ton poste ou rentre-le manuellement', 'info');
+        });
     </script>
 </body>
 </html>
